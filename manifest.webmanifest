@@ -1,0 +1,19 @@
+{
+  "name": "LinguaStep İngilizce Öğrenme",
+  "short_name": "LinguaStep",
+  "description": "Günlük ders, kelime kartı, mini quiz ve konuşma pratiği ile mobil İngilizce öğrenme uygulaması.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7f8",
+  "theme_color": "#17212b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

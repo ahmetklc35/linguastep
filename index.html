@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17212b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="LinguaStep" />
+    <title>LinguaStep | İngilizce Öğrenme</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Uygulama menüsü">
+        <div class="brand">
+          <div class="brand-mark">LS</div>
+          <div>
+            <strong>LinguaStep</strong>
+            <span>Akıllı İngilizce koçu</span>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="Bölümler">
+          <button class="nav-tab is-active" data-view="home" type="button">Ana Sayfa</button>
+          <button class="nav-tab" data-view="lesson" type="button">Ders</button>
+          <button class="nav-tab" data-view="words" type="button">Kelimeler</button>
+          <button class="nav-tab" data-view="quiz" type="button">Quiz</button>
+          <button class="nav-tab" data-view="speaking" type="button">Konuşma</button>
+        </nav>
+
+        <div class="profile-box">
+          <label for="levelSelect">Seviye</label>
+          <select id="levelSelect">
+            <option value="A1">A1 Başlangıç</option>
+            <option value="A2">A2 Temel</option>
+            <option value="B1">B1 Orta</option>
+          </select>
+        </div>
+      </aside>
+
+      <main>
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">Bugünkü hedef</p>
+            <h1 id="dailyTitle">10 dakika pratik, gerçek ilerleme.</h1>
+          </div>
+          <button class="primary-action" id="startDailyBtn" type="button">Derse Başla</button>
+        </section>
+
+        <section class="stats-grid" aria-label="İlerleme özeti">
+          <article class="stat">
+            <span>Seri</span>
+            <strong id="streakCount">0 gün</strong>
+          </article>
+          <article class="stat">
+            <span>XP</span>
+            <strong id="xpCount">0</strong>
+          </article>
+          <article class="stat">
+            <span>Öğrenilen Kelime</span>
+            <strong id="knownWords">0</strong>
+          </article>
+          <article class="stat">
+            <span>Quiz Başarısı</span>
+            <strong id="quizScore">0%</strong>
+          </article>
+        </section>
+
+        <section class="view is-visible" id="home">
+          <div class="hero">
+            <div class="hero-copy">
+              <p class="eyebrow">Kişisel çalışma akışı</p>
+              <h2>Her gün kısa, ölçülebilir ve konuşmaya dönük İngilizce pratiği.</h2>
+              <p>
+                Dersler Türkçe açıklama, İngilizce örnek, kelime kartı ve mini test düzeninde ilerler.
+                Uygulama seviyene göre içeriği değiştirir ve çalışma geçmişini saklar.
+              </p>
+              <div class="hero-actions">
+                <button class="primary-action" data-go="lesson" type="button">Günün Dersini Aç</button>
+                <button class="ghost-action" data-go="quiz" type="button">Seviye Kontrolü</button>
+              </div>
+            </div>
+            <div class="phone-preview" aria-label="Ders önizlemesi">
+              <div class="phone-top"></div>
+              <p>Today's phrase</p>
+              <strong id="previewPhrase">Could you repeat that, please?</strong>
+              <span>Lütfen tekrar eder misiniz?</span>
+              <div class="audio-bars" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="routine">
+            <h3>Bugünkü 3 adım</h3>
+            <div class="routine-grid">
+              <button class="routine-item" data-go="lesson" type="button">
+                <span>01</span>
+                <strong>Grameri kavra</strong>
+                <small>Kısa açıklama ve örnek cümleler</small>
+              </button>
+              <button class="routine-item" data-go="words" type="button">
+                <span>02</span>
+                <strong>Kelimeleri pekiştir</strong>
+                <small>Akılda kalıcı kart sistemi</small>
+              </button>
+              <button class="routine-item" data-go="speaking" type="button">
+                <span>03</span>
+                <strong>Sesli prova yap</strong>
+                <small>Günlük konuşma senaryosu</small>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view lesson-layout" id="lesson">
+          <div class="lesson-panel">
+            <p class="eyebrow" id="lessonLevel">A1 Dersi</p>
+            <h2 id="lessonTitle"></h2>
+            <p id="lessonExplanation"></p>
+            <div class="example-box">
+              <span>Örnek</span>
+              <strong id="lessonExample"></strong>
+              <small id="lessonTranslation"></small>
+            </div>
+            <div class="lesson-actions">
+              <button class="primary-action" id="completeLessonBtn" type="button">Dersi Tamamla</button>
+              <button class="ghost-action" id="nextLessonBtn" type="button">Sonraki Ders</button>
+            </div>
+          </div>
+          <div class="coach-panel">
+            <h3>Öğretmen Notu</h3>
+            <p id="coachTip"></p>
+          </div>
+        </section>
+
+        <section class="view" id="words">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Kelime kartları</p>
+              <h2>Önce anlamı tahmin et, sonra çevir.</h2>
+            </div>
+            <button class="ghost-action" id="shuffleWordBtn" type="button">Karıştır</button>
+          </div>
+          <div class="flashcard" id="flashcard" tabindex="0" role="button" aria-pressed="false">
+            <span id="wordTag">A1</span>
+            <strong id="wordEnglish"></strong>
+            <p id="wordSentence"></p>
+            <small id="wordTurkish"></small>
+          </div>
+          <div class="word-actions">
+            <button class="primary-action" id="knowWordBtn" type="button">Biliyorum</button>
+            <button class="ghost-action" id="flipWordBtn" type="button">Çevir</button>
+          </div>
+        </section>
+
+        <section class="view" id="quiz">
+          <div class="quiz-panel">
+            <p class="eyebrow">Mini quiz</p>
+            <h2 id="questionText"></h2>
+            <div class="answers" id="answers"></div>
+            <p class="feedback" id="feedback" aria-live="polite"></p>
+            <button class="ghost-action" id="nextQuestionBtn" type="button">Yeni Soru</button>
+          </div>
+        </section>
+
+        <section class="view speaking-layout" id="speaking">
+          <div>
+            <p class="eyebrow">Konuşma pratiği</p>
+            <h2 id="speakingTitle"></h2>
+            <p id="speakingScenario"></p>
+            <div class="prompt-list" id="promptList"></div>
+          </div>
+          <div class="record-panel">
+            <button class="record-button" id="recordBtn" type="button" aria-pressed="false">REC</button>
+            <strong id="recordStatus">Hazır</strong>
+            <span>30 saniyelik prova yap, sonra kendini değerlendir.</span>
+            <button class="primary-action" id="completeSpeakingBtn" type="button">Pratiği Bitir</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
