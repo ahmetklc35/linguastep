@@ -567,6 +567,10 @@ h3 {
   animation: breathe 1s ease-in-out infinite alternate;
 }
 
+.record-button.is-ready {
+  background: var(--blue);
+}
+
 @keyframes breathe {
   to { transform: scale(1.05); }
 }
@@ -574,6 +578,52 @@ h3 {
 .record-panel span {
   color: var(--muted);
   line-height: 1.45;
+}
+
+.record-meter {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.record-meter span {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.record-progress {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #dce5ec;
+}
+
+.record-progress i {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mint);
+  transition: width 0.2s ease;
+}
+
+.playback {
+  display: none;
+  width: 100%;
+}
+
+.playback.has-audio {
+  display: block;
+}
+
+#retryRecordingBtn {
+  display: none;
+  width: 100%;
+}
+
+#retryRecordingBtn.is-visible {
+  display: inline-block;
 }
 
 @media (max-width: 920px) {
@@ -690,6 +740,11 @@ h3 {
     padding: 14px 14px 94px;
   }
 
+  body:not([data-current-view="home"]) .topbar,
+  body:not([data-current-view="home"]) .stats-grid {
+    display: none;
+  }
+
   .topbar {
     align-items: stretch;
     flex-direction: column;
@@ -705,6 +760,7 @@ h3 {
   .word-actions .primary-action,
   .word-actions .ghost-action,
   .quiz-panel .ghost-action,
+  .record-panel .ghost-action,
   .record-panel .primary-action {
     width: 100%;
   }

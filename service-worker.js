@@ -1,4 +1,4 @@
-const CACHE_NAME = "linguastep-v1";
+const CACHE_NAME = "linguastep-v2";
 const ASSETS = [
   "./",
   "./index.html",

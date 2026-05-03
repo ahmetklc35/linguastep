@@ -165,6 +165,16 @@ const state = {
   ...JSON.parse(localStorage.getItem("linguaStepState") || "{}")
 };
 
+const recordingState = {
+  recorder: null,
+  stream: null,
+  chunks: [],
+  startedAt: 0,
+  timerId: null,
+  audioUrl: "",
+  maxSeconds: 30
+};
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -189,6 +199,7 @@ function awardXp(points) {
 }
 
 function switchView(viewId) {
+  document.body.dataset.currentView = viewId;
   $$(".view").forEach((view) => view.classList.toggle("is-visible", view.id === viewId));
   $$(".nav-tab").forEach((tab) => tab.classList.toggle("is-active", tab.dataset.view === viewId));
 }
@@ -262,6 +273,126 @@ function renderSpeaking() {
   $("#speakingTitle").textContent = speaking.title;
   $("#speakingScenario").textContent = speaking.scenario;
   $("#promptList").innerHTML = speaking.prompts.map((prompt) => `<p>${prompt}</p>`).join("");
+}
+
+function formatSeconds(seconds) {
+  return `00:${String(Math.min(seconds, recordingState.maxSeconds)).padStart(2, "0")}`;
+}
+
+function setRecordingProgress(seconds) {
+  $("#recordTimer").textContent = formatSeconds(seconds);
+  $("#recordProgress").style.width = `${Math.min(100, (seconds / recordingState.maxSeconds) * 100)}%`;
+}
+
+function cleanupRecordingStream() {
+  if (recordingState.stream) {
+    recordingState.stream.getTracks().forEach((track) => track.stop());
+  }
+  recordingState.stream = null;
+}
+
+function resetRecording() {
+  clearInterval(recordingState.timerId);
+  recordingState.timerId = null;
+  recordingState.chunks = [];
+  cleanupRecordingStream();
+
+  if (recordingState.audioUrl) {
+    URL.revokeObjectURL(recordingState.audioUrl);
+  }
+  recordingState.audioUrl = "";
+
+  $("#playbackAudio").removeAttribute("src");
+  $("#playbackAudio").classList.remove("has-audio");
+  $("#retryRecordingBtn").classList.remove("is-visible");
+  $("#recordBtn").classList.remove("is-recording", "is-ready");
+  $("#recordBtn").setAttribute("aria-pressed", "false");
+  $("#recordStatus").textContent = "Hazır";
+  $("#recordHint").textContent = "30 saniyelik prova yap, sonra kaydını dinle.";
+  setRecordingProgress(0);
+}
+
+function finishRecording() {
+  clearInterval(recordingState.timerId);
+  recordingState.timerId = null;
+  cleanupRecordingStream();
+  $("#recordBtn").classList.remove("is-recording");
+  $("#recordBtn").setAttribute("aria-pressed", "false");
+
+  const blob = new Blob(recordingState.chunks, {
+    type: recordingState.recorder?.mimeType || "audio/webm"
+  });
+
+  if (!blob.size) {
+    $("#recordStatus").textContent = "Kayıt alınamadı";
+    $("#recordHint").textContent = "Mikrofon iznini kontrol edip tekrar dene.";
+    return;
+  }
+
+  recordingState.audioUrl = URL.createObjectURL(blob);
+  $("#playbackAudio").src = recordingState.audioUrl;
+  $("#playbackAudio").classList.add("has-audio");
+  $("#retryRecordingBtn").classList.add("is-visible");
+  $("#recordBtn").classList.add("is-ready");
+  $("#recordStatus").textContent = "Kayıt hazır";
+  $("#recordHint").textContent = "Şimdi kendini dinle: akıcılık, telaffuz ve duraksamalara bak.";
+}
+
+function startRecordingTimer() {
+  setRecordingProgress(0);
+  recordingState.startedAt = Date.now();
+  recordingState.timerId = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - recordingState.startedAt) / 1000);
+    setRecordingProgress(elapsed);
+    if (elapsed >= recordingState.maxSeconds) {
+      stopRecording();
+    }
+  }, 250);
+}
+
+function stopRecording() {
+  if (recordingState.recorder?.state === "recording") {
+    recordingState.recorder.stop();
+  }
+}
+
+function getSupportedAudioOptions() {
+  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"];
+  const mimeType = types.find((type) => MediaRecorder.isTypeSupported(type));
+  return mimeType ? { mimeType } : {};
+}
+
+async function startRecording() {
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    $("#recordStatus").textContent = "Bu tarayıcı desteklemiyor";
+    $("#recordHint").textContent = "Telefonda Chrome veya Safari ile HTTPS linkinden açmayı dene.";
+    return;
+  }
+
+  resetRecording();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordingState.stream = stream;
+    recordingState.chunks = [];
+    recordingState.recorder = new MediaRecorder(stream, getSupportedAudioOptions());
+
+    recordingState.recorder.addEventListener("dataavailable", (event) => {
+      if (event.data.size) recordingState.chunks.push(event.data);
+    });
+    recordingState.recorder.addEventListener("stop", finishRecording);
+    recordingState.recorder.start();
+
+    $("#recordBtn").classList.add("is-recording");
+    $("#recordBtn").setAttribute("aria-pressed", "true");
+    $("#recordStatus").textContent = "Kayıt alınıyor";
+    $("#recordHint").textContent = "Konuşmanı doğal hızda yap. Bitince REC'e tekrar bas.";
+    startRecordingTimer();
+  } catch (error) {
+    cleanupRecordingStream();
+    $("#recordStatus").textContent = "Mikrofon izni gerekli";
+    $("#recordHint").textContent = "Tarayıcı mikrofon iznini kapattıysa ayarlardan izin verip tekrar dene.";
+  }
 }
 
 function renderAll() {
@@ -340,19 +471,31 @@ $("#nextQuestionBtn").addEventListener("click", () => {
 });
 
 $("#recordBtn").addEventListener("click", () => {
-  const recording = $("#recordBtn").classList.toggle("is-recording");
-  $("#recordBtn").setAttribute("aria-pressed", String(recording));
-  $("#recordStatus").textContent = recording ? "Kayıt simülasyonu aktif" : "Hazır";
+  if (recordingState.recorder?.state === "recording") {
+    stopRecording();
+    return;
+  }
+
+  startRecording();
+});
+
+$("#retryRecordingBtn").addEventListener("click", () => {
+  resetRecording();
 });
 
 $("#completeSpeakingBtn").addEventListener("click", () => {
   awardXp(12);
-  $("#recordBtn").classList.remove("is-recording");
-  $("#recordBtn").setAttribute("aria-pressed", "false");
-  $("#recordStatus").textContent = "Pratik tamamlandı";
+  if (recordingState.recorder?.state === "recording") {
+    stopRecording();
+  }
+  $("#recordStatus").textContent = recordingState.audioUrl ? "Pratik tamamlandı" : "Pratik kayıtsız tamamlandı";
+  $("#recordHint").textContent = recordingState.audioUrl
+    ? "Kaydını dinleyip tekrar denemek istersen yeniden kaydet."
+    : "Bir dahaki pratikte ses kaydı alıp kendini dinleyebilirsin.";
 });
 
 renderAll();
+document.body.dataset.currentView = "home";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

@@ -177,7 +177,15 @@
           <div class="record-panel">
             <button class="record-button" id="recordBtn" type="button" aria-pressed="false">REC</button>
             <strong id="recordStatus">Hazır</strong>
-            <span>30 saniyelik prova yap, sonra kendini değerlendir.</span>
+            <span id="recordHint">30 saniyelik prova yap, sonra kaydını dinle.</span>
+            <div class="record-meter" aria-label="Kayıt süresi">
+              <span id="recordTimer">00:00</span>
+              <div class="record-progress">
+                <i id="recordProgress"></i>
+              </div>
+            </div>
+            <audio class="playback" id="playbackAudio" controls></audio>
+            <button class="ghost-action" id="retryRecordingBtn" type="button">Yeniden Kaydet</button>
             <button class="primary-action" id="completeSpeakingBtn" type="button">Pratiği Bitir</button>
           </div>
         </section>
