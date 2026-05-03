@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="LinguaStep" />
     <title>LinguaStep | İngilizce Öğrenme</title>
-    <link rel="manifest" href="manifest.webmanifest?v=7" />
-    <link rel="icon" href="icon.svg?v=7" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="icon.svg?v=7" />
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="manifest" href="manifest.webmanifest?v=8" />
+    <link rel="icon" href="icon.svg?v=8" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg?v=8" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <div class="app-shell">
@@ -52,6 +52,10 @@
 
         <section class="stats-grid" aria-label="İlerleme özeti">
           <article class="stat">
+            <span>Kalp</span>
+            <strong id="heartCount">5</strong>
+          </article>
+          <article class="stat">
             <span>Seri</span>
             <strong id="streakCount">0 gün</strong>
           </article>
@@ -70,6 +74,29 @@
         </section>
 
         <section class="view is-visible" id="home">
+          <div class="learning-dashboard">
+            <section class="path-panel" aria-label="Ders yolu">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Ders yolu</p>
+                  <h2>Bugün nerede kaldığını gör.</h2>
+                </div>
+                <button class="ghost-action" data-go="lesson" type="button">Devam Et</button>
+              </div>
+              <div class="lesson-path" id="lessonPath"></div>
+            </section>
+
+            <section class="quest-panel" aria-label="Günlük görevler">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Görevler</p>
+                  <h2>XP hedefleri</h2>
+                </div>
+              </div>
+              <div class="quest-list" id="questList"></div>
+            </section>
+          </div>
+
           <div class="hero">
             <div class="hero-copy">
               <p class="eyebrow">Kişisel çalışma akışı</p>
@@ -216,6 +243,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>

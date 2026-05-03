@@ -243,6 +243,7 @@ const content = {
 const defaultState = {
   level: "A1",
   xp: 0,
+  hearts: 5,
   streak: 0,
   knownWords: [],
   quizCorrect: 0,
@@ -253,6 +254,13 @@ const defaultState = {
   quizIndex: 0,
   coachIndex: 0
 };
+
+const MAX_HEARTS = 5;
+const QUESTS = [
+  { title: "20 XP kazan", value: 20 },
+  { title: "50 XP kazan", value: 50 },
+  { title: "100 XP kazan", value: 100 }
+];
 
 const state = {
   ...defaultState,
@@ -279,6 +287,8 @@ const todayKey = () => new Date().toISOString().slice(0, 10);
 function saveState() {
   localStorage.setItem("linguaStepState", JSON.stringify(state));
   renderStats();
+  renderQuests();
+  renderLessonPath();
 }
 
 function currentLevel() {
@@ -294,6 +304,18 @@ function awardXp(points) {
   saveState();
 }
 
+function loseHeart() {
+  state.hearts = Math.max(0, (state.hearts ?? MAX_HEARTS) - 1);
+  saveState();
+}
+
+function refillHeartWithXp() {
+  if (state.hearts >= MAX_HEARTS || state.xp < 10) return;
+  state.hearts += 1;
+  state.xp -= 10;
+  saveState();
+}
+
 function switchView(viewId) {
   document.body.dataset.currentView = viewId;
   $$(".view").forEach((view) => view.classList.toggle("is-visible", view.id === viewId));
@@ -301,11 +323,56 @@ function switchView(viewId) {
 }
 
 function renderStats() {
+  state.hearts = Math.min(MAX_HEARTS, state.hearts ?? MAX_HEARTS);
+  $("#heartCount").textContent = state.hearts;
   $("#streakCount").textContent = `${state.streak} gün`;
   $("#xpCount").textContent = state.xp;
   $("#knownWords").textContent = state.knownWords.length;
   const score = state.quizTotal ? Math.round((state.quizCorrect / state.quizTotal) * 100) : 0;
   $("#quizScore").textContent = `${score}%`;
+}
+
+function renderQuests() {
+  $("#questList").innerHTML = QUESTS.map((quest) => {
+    const progress = Math.min(100, (state.xp / quest.value) * 100);
+    const done = progress >= 100;
+    return `
+      <article class="quest-item ${done ? "is-done" : ""}">
+        <div>
+          <strong>${quest.title}</strong>
+          <span>${Math.min(state.xp, quest.value)} / ${quest.value} XP</span>
+        </div>
+        <div class="quest-progress"><i style="width: ${progress}%"></i></div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderLessonPath() {
+  const nodes = [
+    { title: "Tanışma", view: "speaking", xp: 0 },
+    { title: "Günün dersi", view: "lesson", xp: 15 },
+    { title: "Kelime kartı", view: "words", xp: 25 },
+    { title: "Mini quiz", view: "quiz", xp: 35 },
+    { title: "Konuşma koçu", view: "speaking", xp: 50 }
+  ];
+
+  $("#lessonPath").innerHTML = nodes.map((node, index) => {
+    const completed = state.xp >= node.xp;
+    const current = !completed && state.xp >= Math.max(0, node.xp - 15);
+    const locked = !completed && !current;
+    return `
+      <button class="path-node ${completed ? "is-complete" : ""} ${current ? "is-current" : ""}" data-go="${node.view}" type="button" ${locked ? "disabled" : ""}>
+        <span>${completed ? "✓" : locked ? "•" : "★"}</span>
+        <strong>${node.title}</strong>
+        <small>${locked ? `${node.xp} XP ile açılır` : current ? "Sıradaki adım" : "Tamamlandı"}</small>
+      </button>
+    `;
+  }).join("");
+
+  $$("#lessonPath [data-go]").forEach((button) => {
+    button.addEventListener("click", () => switchView(button.dataset.go));
+  });
 }
 
 function renderLesson() {
@@ -354,13 +421,17 @@ function answerQuestion(button, option, quiz) {
   if (correct) {
     state.quizCorrect += 1;
     state.xp += 8;
+  } else {
+    loseHeart();
   }
 
   $$(".answer").forEach((answer) => {
     if (answer.textContent === quiz.answer) answer.classList.add("is-correct");
   });
 
-  $("#feedback").textContent = correct ? `Doğru. ${quiz.note}` : `Bir daha bak. ${quiz.note}`;
+  $("#feedback").textContent = correct
+    ? `Doğru. ${quiz.note}`
+    : `Bir kalp gitti. ${quiz.note}`;
   saveState();
 }
 
@@ -690,6 +761,8 @@ async function startRecording() {
 function renderAll() {
   $("#levelSelect").value = state.level;
   renderStats();
+  renderQuests();
+  renderLessonPath();
   renderLesson();
   renderWord();
   renderQuiz();
