@@ -63,7 +63,32 @@ const content = {
         }
       ],
       modelAnswer:
-        "My name is Ahmet. I am from Turkey. I work in technical operations and I also work on app development projects. I am learning English because I think it will be very useful in my work life and for my career."
+        "My name is Ahmet. I am from Turkey. I work in technical operations and I also work on app development projects. I am learning English because I think it will be very useful in my work life and for my career.",
+      dialogue: [
+        {
+          question: "Hi, nice to meet you. What do you do?",
+          tr: "Merhaba, tanıştığımıza memnun oldum. Ne iş yapıyorsun?",
+          help: [
+            "I work in technical operations.",
+            "I work on app development projects.",
+            "I am responsible for technical work."
+          ],
+          sample: "I work in technical operations and I also work on app development projects.",
+          keywords: ["work", "technical", "operations", "app", "development"]
+        },
+        {
+          question: "Why are you learning English?",
+          tr: "Neden İngilizce öğreniyorsun?",
+          help: [
+            "I am learning English because it will be useful in my work life.",
+            "I want to improve my English for my career.",
+            "English can help me communicate better at work."
+          ],
+          sample:
+            "I am learning English because I think it will be very useful in my work life and for my career.",
+          keywords: ["learning", "because", "useful", "work", "career"]
+        }
+      ]
     }
   },
   A2: {
@@ -118,7 +143,23 @@ const content = {
         { tr: "Bence faydalı olacak.", en: "I think it will be useful." }
       ],
       modelAnswer:
-        "This weekend, I am going to study English. First, I will review new words. After that, I want to practice speaking. I think it will be useful for my confidence."
+        "This weekend, I am going to study English. First, I will review new words. After that, I want to practice speaking. I think it will be useful for my confidence.",
+      dialogue: [
+        {
+          question: "What are you going to do this weekend?",
+          tr: "Bu hafta sonu ne yapacaksın?",
+          help: ["I am going to study English.", "I am going to practice speaking.", "I will review new words."],
+          sample: "This weekend, I am going to study English and practice speaking.",
+          keywords: ["going", "study", "practice", "weekend"]
+        },
+        {
+          question: "Why do you want to practice speaking?",
+          tr: "Neden konuşma pratiği yapmak istiyorsun?",
+          help: ["I want to speak more confidently.", "I want to use English at work.", "It helps me improve."],
+          sample: "I want to practice speaking because I want to speak more confidently at work.",
+          keywords: ["want", "practice", "because", "confident", "work"]
+        }
+      ]
     }
   },
   B1: {
@@ -178,7 +219,23 @@ const content = {
         { tr: "Ama düzenli olmak zorundayım.", en: "However, I need to be consistent." }
       ],
       modelAnswer:
-        "In my opinion, online learning is flexible. The main reason is that I can study whenever I want. For example, I can practice after work. However, I need to be consistent to improve."
+        "In my opinion, online learning is flexible. The main reason is that I can study whenever I want. For example, I can practice after work. However, I need to be consistent to improve.",
+      dialogue: [
+        {
+          question: "What is your opinion about online English learning?",
+          tr: "Online İngilizce öğrenme hakkında fikrin nedir?",
+          help: ["In my opinion, it is flexible.", "I think it is useful.", "It helps busy people study regularly."],
+          sample: "In my opinion, online English learning is flexible and useful for busy people.",
+          keywords: ["opinion", "flexible", "useful", "online"]
+        },
+        {
+          question: "Can you give me one example?",
+          tr: "Bana bir örnek verebilir misin?",
+          help: ["For example, I can practice after work.", "For example, I can repeat lessons anytime."],
+          sample: "For example, I can practice after work and repeat lessons whenever I need.",
+          keywords: ["example", "practice", "after", "work", "repeat"]
+        }
+      ]
     }
   }
 };
@@ -193,7 +250,8 @@ const defaultState = {
   completedToday: "",
   lessonIndex: 0,
   wordIndex: 0,
-  quizIndex: 0
+  quizIndex: 0,
+  coachIndex: 0
 };
 
 const state = {
@@ -307,27 +365,91 @@ function answerQuestion(button, option, quiz) {
 
 function renderSpeaking() {
   const speaking = currentLevel().speaking;
+  const turn = getCurrentCoachTurn();
   $("#speakingTitle").textContent = speaking.title;
   $("#speakingScenario").textContent = speaking.scenario;
-  $("#promptList").innerHTML = speaking.prompts.map((prompt) => `<p>${prompt}</p>`).join("");
-  $("#phraseList").innerHTML = speaking.phrases
-    .map(
-      (phrase) => `
-        <button class="phrase-item" type="button" data-phrase="${phrase.en}">
-          <span>${phrase.tr}</span>
-          <strong>${phrase.en}</strong>
-        </button>
-      `
-    )
-    .join("");
-  $("#answerDraft").textContent = speaking.modelAnswer;
-  $$(".phrase-item").forEach((button) => {
-    button.addEventListener("click", () => {
-      $("#answerDraft").textContent = button.dataset.phrase;
-    });
-  });
+  $("#coachQuestion").innerHTML = `<strong>${turn.question}</strong><small>${turn.tr}</small>`;
+  $("#spokenAnswer").value = "";
+  $("#helpPanel").classList.remove("is-visible");
+  $("#helpPanel").innerHTML = "";
   $("#analysisPanel").classList.remove("is-visible");
   $("#analysisPanel").innerHTML = "";
+}
+
+function getCurrentCoachTurn() {
+  const turns = currentLevel().speaking.dialogue;
+  return turns[state.coachIndex % turns.length];
+}
+
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 0.88;
+  window.speechSynthesis.speak(utterance);
+}
+
+function appendDialogueMessage(role, text) {
+  const message = document.createElement("div");
+  message.className = `message ${role === "coach" ? "coach-message" : "student-message"}`;
+  message.innerHTML = `<span>${role === "coach" ? "Koç" : "Sen"}</span><p>${text}</p>`;
+  $("#dialogueLog").append(message);
+  message.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function renderHelpPanel() {
+  const turn = getCurrentCoachTurn();
+  $("#helpPanel").innerHTML = `
+    <h3>Bu soruya böyle cevap verebilirsin</h3>
+    ${turn.help.map((sentence) => `<button class="helper-sentence" type="button">${sentence}</button>`).join("")}
+    <p><strong>Örnek cevap:</strong> ${turn.sample}</p>
+  `;
+  $("#helpPanel").classList.add("is-visible");
+  $$(".helper-sentence").forEach((button) => {
+    button.addEventListener("click", () => {
+      const current = $("#spokenAnswer").value.trim();
+      $("#spokenAnswer").value = current ? `${current} ${button.textContent}` : button.textContent;
+      $("#spokenAnswer").focus();
+    });
+  });
+}
+
+function evaluateCoachAnswer() {
+  const turn = getCurrentCoachTurn();
+  const answer = $("#spokenAnswer").value.trim();
+  if (!answer) {
+    $("#analysisPanel").innerHTML = `
+      <h3>Koç Değerlendirmesi</h3>
+      <p>Önce kısa bir cevap yaz veya telefonda klavyenin mikrofonuyla söyleyip metne çevir. Sonra değerlendireyim.</p>
+    `;
+    $("#analysisPanel").classList.add("is-visible");
+    return;
+  }
+
+  const normalized = answer.toLowerCase();
+  const hits = turn.keywords.filter((keyword) => normalized.includes(keyword));
+  const needsReason = turn.question.toLowerCase().includes("why");
+  const hasBecause = normalized.includes("because");
+  const wordCount = answer.split(/\s+/).filter(Boolean).length;
+  const reasonBonus = needsReason && hasBecause ? 15 : 0;
+  const directnessBonus = !needsReason && hits.length >= 2 ? 15 : 0;
+  const score = Math.min(100, 35 + hits.length * 12 + reasonBonus + directnessBonus + (wordCount >= 10 ? 14 : 0));
+  const nextStep =
+    score >= 75
+      ? "Cevabın iyi. Şimdi aynı cevabı daha doğal hızda sesli söyle."
+      : "Cevap fikri var ama daha net bir sebep ve iş/kariyer kelimesi ekleyelim.";
+
+  appendDialogueMessage("student", answer);
+  appendDialogueMessage("coach", nextStep);
+  $("#analysisPanel").innerHTML = `
+    <h3>Koç Değerlendirmesi</h3>
+    <p><strong>Puan:</strong> ${score}/100</p>
+    <p><strong>Güçlü taraf:</strong> ${hits.length ? `Şu anahtar fikirleri yakaladın: ${hits.join(", ")}.` : "Cevap vermeye başladın; bu iyi bir ilk adım."}</p>
+    <p><strong>Geliştir:</strong> ${needsReason ? (hasBecause ? "Sebep bağladın, bunu koru." : "Bir sebep ekle: because it will help my career.") : "Sorulan şeye doğrudan cevap ver; sonra istersen ekstra bilgi ekle."}</p>
+    <p><strong>Daha doğal cevap:</strong> ${turn.sample}</p>
+  `;
+  $("#analysisPanel").classList.add("is-visible");
 }
 
 function formatSeconds(seconds) {
@@ -405,7 +527,7 @@ function finishRecording() {
 }
 
 function renderSpeakingAnalysis() {
-  const speaking = currentLevel().speaking;
+  const turn = getCurrentCoachTurn();
   const duration = recordingState.lastDuration || 0;
   const durationFeedback =
     duration >= 18
@@ -413,11 +535,11 @@ function renderSpeakingAnalysis() {
       : "Kayıt kısa kaldı. Hedefin en az 18-25 saniye konuşmak olsun.";
 
   $("#analysisPanel").innerHTML = `
-    <h3>Anlık Koç Analizi</h3>
+    <h3>Ses Kaydı Kontrolü</h3>
     <p><strong>Süre:</strong> ${duration} saniye. ${durationFeedback}</p>
-    <p><strong>Hedef:</strong> Şu yapıları kullan: ${speaking.prompts.join(" / ")}</p>
-    <p><strong>Örnek güçlü cevap:</strong> ${speaking.modelAnswer}</p>
-    <p><strong>Dinlerken kontrol et:</strong> Cümleyi yarıda kesmeden bitirdin mi? "because" sonrası net sebep söyledin mi? "work" kelimesini vurguladın mı?</p>
+    <p><strong>Koçun sorusu:</strong> ${turn.question}</p>
+    <p><strong>Dinlerken kontrol et:</strong> Bu soruya doğrudan cevap verdin mi? Cümleyi yarıda kesmeden bitirdin mi?</p>
+    <p><strong>Metinli değerlendirme için:</strong> Cevabını "Cevabın" alanına yaz veya telefon klavyesinin mikrofonuyla söyleyip metne çevir, sonra "Cevabımı Değerlendir" düğmesine bas.</p>
   `;
   $("#analysisPanel").classList.add("is-visible");
 }
@@ -503,6 +625,7 @@ $("#levelSelect").addEventListener("change", (event) => {
   state.lessonIndex = 0;
   state.wordIndex = 0;
   state.quizIndex = 0;
+  state.coachIndex = 0;
   saveState();
   renderAll();
 });
@@ -552,6 +675,25 @@ $("#nextQuestionBtn").addEventListener("click", () => {
   state.quizIndex += 1;
   saveState();
   renderQuiz();
+});
+
+$("#speakQuestionBtn").addEventListener("click", () => {
+  speakText(getCurrentCoachTurn().question);
+});
+
+$("#nextCoachQuestionBtn").addEventListener("click", () => {
+  state.coachIndex += 1;
+  saveState();
+  renderSpeaking();
+  appendDialogueMessage("coach", getCurrentCoachTurn().question);
+});
+
+$("#showHelpBtn").addEventListener("click", () => {
+  renderHelpPanel();
+});
+
+$("#evaluateTextBtn").addEventListener("click", () => {
+  evaluateCoachAnswer();
 });
 
 $("#recordBtn").addEventListener("click", () => {

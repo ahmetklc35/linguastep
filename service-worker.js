@@ -1,11 +1,11 @@
-const CACHE_NAME = "linguastep-v4";
+const CACHE_NAME = "linguastep-v6";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=4",
-  "./app.js?v=4",
-  "./manifest.webmanifest?v=4",
-  "./icon.svg?v=4"
+  "./styles.css?v=6",
+  "./app.js?v=6",
+  "./manifest.webmanifest?v=6",
+  "./icon.svg?v=6"
 ];
 
 self.addEventListener("install", (event) => {

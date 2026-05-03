@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="LinguaStep" />
     <title>LinguaStep | İngilizce Öğrenme</title>
-    <link rel="manifest" href="manifest.webmanifest?v=4" />
-    <link rel="icon" href="icon.svg?v=4" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="icon.svg?v=4" />
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <link rel="manifest" href="manifest.webmanifest?v=6" />
+    <link rel="icon" href="icon.svg?v=6" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg?v=6" />
+    <link rel="stylesheet" href="styles.css?v=6" />
   </head>
   <body>
     <div class="app-shell">
@@ -172,13 +172,27 @@
             <p class="eyebrow">Konuşma pratiği</p>
             <h2 id="speakingTitle"></h2>
             <p id="speakingScenario"></p>
-            <div class="prompt-list" id="promptList"></div>
-            <div class="phrase-helper">
-              <h3>Cümle Yardımcısı</h3>
-              <div class="phrase-list" id="phraseList"></div>
-              <div class="draft-box">
-                <span>Hazır cevap taslağı</span>
-                <p id="answerDraft"></p>
+            <div class="coach-card">
+              <span>Öğretmen soruyor</span>
+              <p id="coachQuestion"></p>
+              <div class="coach-actions">
+                <button class="ghost-action" id="speakQuestionBtn" type="button">Soruyu Dinle</button>
+                <button class="ghost-action" id="nextCoachQuestionBtn" type="button">Sonraki Soru</button>
+              </div>
+            </div>
+            <div class="answer-coach">
+              <label for="spokenAnswer">Cevabın</label>
+              <textarea id="spokenAnswer" rows="5" placeholder="Örn: I work in technical operations. I am learning English because..."></textarea>
+              <div class="coach-actions">
+                <button class="primary-action" id="evaluateTextBtn" type="button">Cevabımı Değerlendir</button>
+                <button class="ghost-action" id="showHelpBtn" type="button">Nasıl Derim?</button>
+              </div>
+              <div class="help-panel" id="helpPanel"></div>
+            </div>
+            <div class="dialogue-log" id="dialogueLog" aria-live="polite">
+              <div class="message coach-message">
+                <span>Koç</span>
+                <p>Hazırsan soruyu dinle, sonra kendi cevabını kur. Takılırsan "Nasıl Derim?" düğmesine bas.</p>
               </div>
             </div>
           </div>
@@ -202,6 +216,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>
