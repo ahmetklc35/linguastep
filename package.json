@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vercel dev",
-    "check": "node --check app.js && node --check api/analyze-speaking.js"
+    "check": "node --check app.js && node --check api/analyze-speaking.js && node --check api/evaluate-text.js"
   },
   "engines": {
     "node": ">=20"

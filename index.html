@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="LinguaStep" />
     <title>LinguaStep | İngilizce Öğrenme</title>
-    <link rel="manifest" href="manifest.webmanifest?v=8" />
-    <link rel="icon" href="icon.svg?v=8" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="icon.svg?v=8" />
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="manifest" href="manifest.webmanifest?v=9" />
+    <link rel="icon" href="icon.svg?v=9" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg?v=9" />
+    <link rel="stylesheet" href="styles.css?v=9" />
   </head>
   <body>
     <div class="app-shell">
@@ -211,9 +211,11 @@
               <label for="spokenAnswer">Cevabın</label>
               <textarea id="spokenAnswer" rows="5" placeholder="Örn: I work in technical operations. I am learning English because..."></textarea>
               <div class="coach-actions">
+                <button class="ghost-action" id="liveSpeechBtn" type="button">Canlı Konuş</button>
                 <button class="primary-action" id="evaluateTextBtn" type="button">Cevabımı Değerlendir</button>
                 <button class="ghost-action" id="showHelpBtn" type="button">Nasıl Derim?</button>
               </div>
+              <p class="speech-status" id="speechStatus">Canlı konuşma desteklenirse cevabın otomatik yazıya dökülür.</p>
               <div class="help-panel" id="helpPanel"></div>
             </div>
             <div class="dialogue-log" id="dialogueLog" aria-live="polite">
@@ -243,6 +245,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

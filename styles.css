@@ -737,6 +737,18 @@ h3 {
   line-height: 1.5;
 }
 
+.speech-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+#liveSpeechBtn.is-listening {
+  color: #ffffff;
+  border-color: var(--coral);
+  background: var(--coral);
+}
+
 .help-panel {
   display: none;
   gap: 10px;

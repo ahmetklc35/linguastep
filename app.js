@@ -279,6 +279,11 @@ const recordingState = {
   maxSeconds: 30
 };
 
+const speechState = {
+  recognition: null,
+  listening: false
+};
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -522,6 +527,118 @@ function evaluateCoachAnswer() {
     <p><strong>Daha doğal cevap:</strong> ${turn.sample}</p>
   `;
   $("#analysisPanel").classList.add("is-visible");
+}
+
+async function evaluateCoachAnswerWithOllama() {
+  const turn = getCurrentCoachTurn();
+  const answer = $("#spokenAnswer").value.trim();
+  if (!answer) {
+    evaluateCoachAnswer();
+    return;
+  }
+
+  $("#analysisPanel").innerHTML = `
+    <h3>Ollama Koçu Düşünüyor</h3>
+    <p>Cevabın yerel AI koçuna gönderiliyor. Ollama çalışmıyorsa otomatik olarak yerel değerlendirmeye döneceğim.</p>
+  `;
+  $("#analysisPanel").classList.add("is-visible");
+  $("#evaluateTextBtn").disabled = true;
+  $("#evaluateTextBtn").textContent = "Değerlendiriliyor...";
+
+  try {
+    const response = await fetch("/api/evaluate-text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        level: state.level,
+        question: turn.question,
+        questionTr: turn.tr,
+        answer,
+        sampleAnswer: turn.sample,
+        keywords: turn.keywords
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || data.fallback) throw new Error(data.error || "Ollama yanıt vermedi.");
+
+    appendDialogueMessage("student", answer);
+    appendDialogueMessage("coach", data.summary);
+    $("#analysisPanel").innerHTML = `
+      <h3>Ollama Koç Değerlendirmesi</h3>
+      <p><strong>Puan:</strong> ${data.score}/100</p>
+      <p><strong>Özet:</strong> ${data.summary}</p>
+      <p><strong>Gramer:</strong> ${data.grammar}</p>
+      <p><strong>Akıcılık:</strong> ${data.fluency}</p>
+      <p><strong>Daha doğal cevap:</strong> ${data.naturalAnswer}</p>
+      <p><strong>Sonraki deneme:</strong> ${data.nextTry}</p>
+    `;
+  } catch (error) {
+    evaluateCoachAnswer();
+  } finally {
+    $("#evaluateTextBtn").disabled = false;
+    $("#evaluateTextBtn").textContent = "Cevabımı Değerlendir";
+  }
+}
+
+function initWebSpeech() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    $("#speechStatus").textContent = "Bu tarayıcı Web Speech API desteklemiyor. Android Chrome ile dene.";
+    $("#liveSpeechBtn").disabled = true;
+    return;
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  recognition.addEventListener("start", () => {
+    speechState.listening = true;
+    $("#liveSpeechBtn").textContent = "Dinleniyor...";
+    $("#liveSpeechBtn").classList.add("is-listening");
+    $("#speechStatus").textContent = "Konuş. Bitince otomatik yazıya dökeceğim.";
+  });
+
+  recognition.addEventListener("result", (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      transcript += event.results[i][0].transcript;
+    }
+    $("#spokenAnswer").value = transcript.trim();
+  });
+
+  recognition.addEventListener("end", () => {
+    speechState.listening = false;
+    $("#liveSpeechBtn").textContent = "Canlı Konuş";
+    $("#liveSpeechBtn").classList.remove("is-listening");
+    $("#speechStatus").textContent = $("#spokenAnswer").value.trim()
+      ? "Metin hazır. Şimdi cevabını değerlendirebilirsin."
+      : "Ses anlaşılmadı. Daha net ve kısa cümleyle tekrar dene.";
+  });
+
+  recognition.addEventListener("error", (event) => {
+    speechState.listening = false;
+    $("#liveSpeechBtn").textContent = "Canlı Konuş";
+    $("#liveSpeechBtn").classList.remove("is-listening");
+    $("#speechStatus").textContent = `Konuşma algılanamadı: ${event.error}.`;
+  });
+
+  speechState.recognition = recognition;
+}
+
+function toggleLiveSpeech() {
+  if (!speechState.recognition) {
+    initWebSpeech();
+  }
+  if (!speechState.recognition) return;
+
+  if (speechState.listening) {
+    speechState.recognition.stop();
+  } else {
+    $("#spokenAnswer").value = "";
+    speechState.recognition.start();
+  }
 }
 
 function formatSeconds(seconds) {
@@ -851,8 +968,12 @@ $("#showHelpBtn").addEventListener("click", () => {
   renderHelpPanel();
 });
 
+$("#liveSpeechBtn").addEventListener("click", () => {
+  toggleLiveSpeech();
+});
+
 $("#evaluateTextBtn").addEventListener("click", () => {
-  evaluateCoachAnswer();
+  evaluateCoachAnswerWithOllama();
 });
 
 $("#recordBtn").addEventListener("click", () => {
@@ -885,6 +1006,7 @@ $("#completeSpeakingBtn").addEventListener("click", () => {
 
 renderAll();
 document.body.dataset.currentView = "home";
+initWebSpeech();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

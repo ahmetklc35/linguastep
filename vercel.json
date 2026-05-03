@@ -6,6 +6,10 @@
       "destination": "/api/analyze-speaking.js"
     },
     {
+      "source": "/api/evaluate-text",
+      "destination": "/api/evaluate-text.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
