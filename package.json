@@ -1,0 +1,16 @@
+{
+  "name": "linguastep",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vercel dev",
+    "check": "node --check app.js && node --check api/analyze-speaking.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "vercel": "^48.6.0"
+  }
+}

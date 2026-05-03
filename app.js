@@ -266,6 +266,7 @@ const recordingState = {
   startedAt: 0,
   timerId: null,
   audioUrl: "",
+  audioBlob: null,
   lastDuration: 0,
   maxSeconds: 30
 };
@@ -483,6 +484,7 @@ function resetRecording() {
     URL.revokeObjectURL(recordingState.audioUrl);
   }
   recordingState.audioUrl = "";
+  recordingState.audioBlob = null;
 
   $("#playbackAudio").removeAttribute("src");
   $("#playbackAudio").classList.remove("has-audio");
@@ -515,6 +517,7 @@ function finishRecording() {
     return;
   }
 
+  recordingState.audioBlob = blob;
   recordingState.audioUrl = URL.createObjectURL(blob);
   $("#playbackAudio").src = recordingState.audioUrl;
   $("#playbackAudio").classList.add("has-audio");
@@ -542,6 +545,89 @@ function renderSpeakingAnalysis() {
     <p><strong>Metinli değerlendirme için:</strong> Cevabını "Cevabın" alanına yaz veya telefon klavyesinin mikrofonuyla söyleyip metne çevir, sonra "Cevabımı Değerlendir" düğmesine bas.</p>
   `;
   $("#analysisPanel").classList.add("is-visible");
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function analyzeRecordingWithAi() {
+  if (!recordingState.audioBlob) {
+    renderSpeakingAnalysis();
+    return;
+  }
+
+  const turn = getCurrentCoachTurn();
+  $("#analysisPanel").innerHTML = `
+    <h3>AI Öğretmen Dinliyor</h3>
+    <p>Ses kaydın yazıya çevriliyor ve cevabın değerlendiriliyor. Bu birkaç saniye sürebilir.</p>
+  `;
+  $("#analysisPanel").classList.add("is-visible");
+  $("#analyzeRecordingBtn").disabled = true;
+  $("#analyzeRecordingBtn").textContent = "Değerlendiriliyor...";
+
+  try {
+    const audioBase64 = await blobToBase64(recordingState.audioBlob);
+    const response = await fetch("/api/analyze-speaking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audioBase64,
+        mimeType: recordingState.audioBlob.type || "audio/webm",
+        level: state.level,
+        question: turn.question,
+        questionTr: turn.tr,
+        sampleAnswer: turn.sample,
+        keywords: turn.keywords
+      })
+    });
+
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = {
+        error:
+          "AI backend bu adreste çalışmıyor. GitHub Pages statik olduğu için bu özellik Vercel deployment gerektirir."
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || "AI değerlendirmesi alınamadı.");
+    }
+
+    $("#spokenAnswer").value = data.transcript || "";
+    appendDialogueMessage("student", data.transcript || "Ses kaydı transkript edildi.");
+    appendDialogueMessage("coach", data.summary || "Kaydını değerlendirdim.");
+    $("#analysisPanel").innerHTML = `
+      <h3>AI Öğretmen Değerlendirmesi</h3>
+      <p><strong>Transkript:</strong> ${data.transcript || "Transkript alınamadı."}</p>
+      <p><strong>Puan:</strong> ${data.score || 0}/100</p>
+      <p><strong>Akıcılık:</strong> ${data.fluency || "-"}</p>
+      <p><strong>Telaffuz:</strong> ${data.pronunciation || "-"}</p>
+      <p><strong>Gramer:</strong> ${data.grammar || "-"}</p>
+      <p><strong>Daha doğal cevap:</strong> ${data.naturalAnswer || turn.sample}</p>
+      <p><strong>Sonraki deneme:</strong> ${data.nextTry || "Aynı cevabı daha net ve doğal söyle."}</p>
+    `;
+  } catch (error) {
+    $("#analysisPanel").innerHTML = `
+      <h3>AI Bağlantısı Hazır Değil</h3>
+      <p>${error.message}</p>
+      <p>Bu özellik GitHub Pages üzerinde çalışmaz; uygulamayı Vercel gibi backend çalıştıran bir yere yayınlayıp <strong>OPENAI_API_KEY</strong> ortam değişkenini eklememiz gerekiyor.</p>
+    `;
+  } finally {
+    $("#analyzeRecordingBtn").disabled = false;
+    $("#analyzeRecordingBtn").textContent = "Kaydı Değerlendir";
+  }
 }
 
 function startRecordingTimer() {
@@ -710,7 +796,7 @@ $("#retryRecordingBtn").addEventListener("click", () => {
 });
 
 $("#analyzeRecordingBtn").addEventListener("click", () => {
-  renderSpeakingAnalysis();
+  analyzeRecordingWithAi();
 });
 
 $("#completeSpeakingBtn").addEventListener("click", () => {
