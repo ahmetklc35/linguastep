@@ -173,6 +173,14 @@
             <h2 id="speakingTitle"></h2>
             <p id="speakingScenario"></p>
             <div class="prompt-list" id="promptList"></div>
+            <div class="phrase-helper">
+              <h3>Cümle Yardımcısı</h3>
+              <div class="phrase-list" id="phraseList"></div>
+              <div class="draft-box">
+                <span>Hazır cevap taslağı</span>
+                <p id="answerDraft"></p>
+              </div>
+            </div>
           </div>
           <div class="record-panel">
             <button class="record-button" id="recordBtn" type="button" aria-pressed="false">REC</button>
@@ -186,7 +194,9 @@
             </div>
             <audio class="playback" id="playbackAudio" controls></audio>
             <button class="ghost-action" id="retryRecordingBtn" type="button">Yeniden Kaydet</button>
+            <button class="ghost-action" id="analyzeRecordingBtn" type="button">Kaydı Değerlendir</button>
             <button class="primary-action" id="completeSpeakingBtn" type="button">Pratiği Bitir</button>
+            <div class="analysis-panel" id="analysisPanel" aria-live="polite"></div>
           </div>
         </section>
       </main>

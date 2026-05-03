@@ -43,7 +43,27 @@ const content = {
     speaking: {
       title: "Kendini tanıt",
       scenario: "Yeni tanıştığın birine 30 saniyede kendini anlat.",
-      prompts: ["My name is ...", "I am from ...", "I work as ...", "I am learning English because ..."]
+      prompts: ["My name is ...", "I am from ...", "I work as ...", "I am learning English because ..."],
+      phrases: [
+        {
+          tr: "Ne iş yaptığımı bilmiyorum nasıl söyleyeceğim?",
+          en: "I work in technical operations."
+        },
+        {
+          tr: "Uygulama geliştirme ile ilgileniyorum.",
+          en: "I work on app development projects."
+        },
+        {
+          tr: "İş hayatımda çok faydalı olacağını düşünüyorum.",
+          en: "I am learning English because I think it will be very useful in my work life."
+        },
+        {
+          tr: "Kariyerim için İngilizce istiyorum.",
+          en: "I want to improve my English for my career."
+        }
+      ],
+      modelAnswer:
+        "My name is Ahmet. I am from Turkey. I work in technical operations and I also work on app development projects. I am learning English because I think it will be very useful in my work life and for my career."
     }
   },
   A2: {
@@ -90,7 +110,15 @@ const content = {
     speaking: {
       title: "Hafta sonu planı",
       scenario: "Bir arkadaşına hafta sonu ne yapacağını anlat.",
-      prompts: ["This weekend, I am going to ...", "First, I will ...", "After that, I want to ...", "I think it will be ..."]
+      prompts: ["This weekend, I am going to ...", "First, I will ...", "After that, I want to ...", "I think it will be ..."],
+      phrases: [
+        { tr: "Bu hafta sonu İngilizce çalışacağım.", en: "This weekend, I am going to study English." },
+        { tr: "Önce kelime tekrarı yapacağım.", en: "First, I will review new words." },
+        { tr: "Sonra konuşma pratiği yapmak istiyorum.", en: "After that, I want to practice speaking." },
+        { tr: "Bence faydalı olacak.", en: "I think it will be useful." }
+      ],
+      modelAnswer:
+        "This weekend, I am going to study English. First, I will review new words. After that, I want to practice speaking. I think it will be useful for my confidence."
     }
   },
   B1: {
@@ -142,7 +170,15 @@ const content = {
     speaking: {
       title: "Bir fikri savun",
       scenario: "Online İngilizce öğrenmenin avantajlarını anlat.",
-      prompts: ["In my opinion, ...", "The main reason is ...", "For example, ...", "However, ..."]
+      prompts: ["In my opinion, ...", "The main reason is ...", "For example, ...", "However, ..."],
+      phrases: [
+        { tr: "Bence online öğrenme esnektir.", en: "In my opinion, online learning is flexible." },
+        { tr: "Ana sebep, istediğim zaman çalışabilmem.", en: "The main reason is that I can study whenever I want." },
+        { tr: "Örneğin, işten sonra pratik yapabilirim.", en: "For example, I can practice after work." },
+        { tr: "Ama düzenli olmak zorundayım.", en: "However, I need to be consistent." }
+      ],
+      modelAnswer:
+        "In my opinion, online learning is flexible. The main reason is that I can study whenever I want. For example, I can practice after work. However, I need to be consistent to improve."
     }
   }
 };
@@ -172,6 +208,7 @@ const recordingState = {
   startedAt: 0,
   timerId: null,
   audioUrl: "",
+  lastDuration: 0,
   maxSeconds: 30
 };
 
@@ -273,6 +310,24 @@ function renderSpeaking() {
   $("#speakingTitle").textContent = speaking.title;
   $("#speakingScenario").textContent = speaking.scenario;
   $("#promptList").innerHTML = speaking.prompts.map((prompt) => `<p>${prompt}</p>`).join("");
+  $("#phraseList").innerHTML = speaking.phrases
+    .map(
+      (phrase) => `
+        <button class="phrase-item" type="button" data-phrase="${phrase.en}">
+          <span>${phrase.tr}</span>
+          <strong>${phrase.en}</strong>
+        </button>
+      `
+    )
+    .join("");
+  $("#answerDraft").textContent = speaking.modelAnswer;
+  $$(".phrase-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      $("#answerDraft").textContent = button.dataset.phrase;
+    });
+  });
+  $("#analysisPanel").classList.remove("is-visible");
+  $("#analysisPanel").innerHTML = "";
 }
 
 function formatSeconds(seconds) {
@@ -291,6 +346,11 @@ function cleanupRecordingStream() {
   recordingState.stream = null;
 }
 
+function getElapsedRecordingSeconds() {
+  if (!recordingState.startedAt) return 0;
+  return Math.min(recordingState.maxSeconds, Math.max(1, Math.round((Date.now() - recordingState.startedAt) / 1000)));
+}
+
 function resetRecording() {
   clearInterval(recordingState.timerId);
   recordingState.timerId = null;
@@ -305,6 +365,9 @@ function resetRecording() {
   $("#playbackAudio").removeAttribute("src");
   $("#playbackAudio").classList.remove("has-audio");
   $("#retryRecordingBtn").classList.remove("is-visible");
+  $("#analyzeRecordingBtn").classList.remove("is-visible");
+  $("#analysisPanel").classList.remove("is-visible");
+  $("#analysisPanel").innerHTML = "";
   $("#recordBtn").classList.remove("is-recording", "is-ready");
   $("#recordBtn").setAttribute("aria-pressed", "false");
   $("#recordStatus").textContent = "Hazır";
@@ -313,6 +376,7 @@ function resetRecording() {
 }
 
 function finishRecording() {
+  recordingState.lastDuration = getElapsedRecordingSeconds();
   clearInterval(recordingState.timerId);
   recordingState.timerId = null;
   cleanupRecordingStream();
@@ -333,9 +397,29 @@ function finishRecording() {
   $("#playbackAudio").src = recordingState.audioUrl;
   $("#playbackAudio").classList.add("has-audio");
   $("#retryRecordingBtn").classList.add("is-visible");
+  $("#analyzeRecordingBtn").classList.add("is-visible");
   $("#recordBtn").classList.add("is-ready");
   $("#recordStatus").textContent = "Kayıt hazır";
   $("#recordHint").textContent = "Şimdi kendini dinle: akıcılık, telaffuz ve duraksamalara bak.";
+  renderSpeakingAnalysis();
+}
+
+function renderSpeakingAnalysis() {
+  const speaking = currentLevel().speaking;
+  const duration = recordingState.lastDuration || 0;
+  const durationFeedback =
+    duration >= 18
+      ? "Süre iyi. Şimdi daha az duraksayarak tekrar dene."
+      : "Kayıt kısa kaldı. Hedefin en az 18-25 saniye konuşmak olsun.";
+
+  $("#analysisPanel").innerHTML = `
+    <h3>Anlık Koç Analizi</h3>
+    <p><strong>Süre:</strong> ${duration} saniye. ${durationFeedback}</p>
+    <p><strong>Hedef:</strong> Şu yapıları kullan: ${speaking.prompts.join(" / ")}</p>
+    <p><strong>Örnek güçlü cevap:</strong> ${speaking.modelAnswer}</p>
+    <p><strong>Dinlerken kontrol et:</strong> Cümleyi yarıda kesmeden bitirdin mi? "because" sonrası net sebep söyledin mi? "work" kelimesini vurguladın mı?</p>
+  `;
+  $("#analysisPanel").classList.add("is-visible");
 }
 
 function startRecordingTimer() {
@@ -481,6 +565,10 @@ $("#recordBtn").addEventListener("click", () => {
 
 $("#retryRecordingBtn").addEventListener("click", () => {
   resetRecording();
+});
+
+$("#analyzeRecordingBtn").addEventListener("click", () => {
+  renderSpeakingAnalysis();
 });
 
 $("#completeSpeakingBtn").addEventListener("click", () => {

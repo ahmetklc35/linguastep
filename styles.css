@@ -543,6 +543,74 @@ h3 {
   background: #ffffff;
 }
 
+.phrase-helper {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.phrase-helper h3 {
+  margin-bottom: 0;
+}
+
+.phrase-list {
+  display: grid;
+  gap: 10px;
+}
+
+.phrase-item {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: left;
+  background: #ffffff;
+}
+
+.phrase-item:hover {
+  border-color: var(--mint);
+}
+
+.phrase-item span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.phrase-item strong {
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.draft-box,
+.analysis-panel {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #eef6fb;
+}
+
+.draft-box span {
+  color: var(--blue);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.draft-box p,
+.analysis-panel p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
 .record-panel {
   display: grid;
   place-items: center;
@@ -624,6 +692,30 @@ h3 {
 
 #retryRecordingBtn.is-visible {
   display: inline-block;
+}
+
+#analyzeRecordingBtn {
+  display: none;
+  width: 100%;
+}
+
+#analyzeRecordingBtn.is-visible {
+  display: inline-block;
+}
+
+.analysis-panel {
+  display: none;
+  width: 100%;
+  text-align: left;
+  background: #fff7e6;
+}
+
+.analysis-panel.is-visible {
+  display: grid;
+}
+
+.analysis-panel h3 {
+  margin-bottom: 0;
 }
 
 @media (max-width: 920px) {
@@ -958,6 +1050,14 @@ h3 {
 
   .prompt-list p {
     padding: 12px 14px;
+  }
+
+  .phrase-helper {
+    margin: 14px -14px 0;
+    padding: 16px;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
   }
 }
 
